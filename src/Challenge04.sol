@@ -84,6 +84,8 @@ contract Challenge04 {
     }
 
     function transferFrom(address from, address to, uint256 value) public returns (bool) {
+
+        // @audit missing pause check 
         _spendAllowance(from, msg.sender, value);
         _transfer(from, to, value);
         return true;

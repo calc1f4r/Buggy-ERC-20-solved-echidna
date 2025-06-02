@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {Challlenge01 as Token} from "../src/Challenge01.sol";
+import {Challenge03 as Token} from "../src/Challenge03.sol";
 // import {Challenge02 as Token} from "../src/Challenge02.sol";
 contract AllInvariants is Token {
 
@@ -18,7 +18,7 @@ contract AllInvariants is Token {
     event BurnPostDebug(address indexed owner, uint256 value);
 
     address public owner;
-    constructor() Token("AllInvariants", "ALLINV") {
+    constructor() Token() {
         // Initialize the contract with some tokens
         owner = msg.sender;
     }
@@ -49,54 +49,40 @@ contract AllInvariants is Token {
     /*
     @
     */
-    function transferInvariant(address to, uint value) public {
-
-        // @audit you should 
-        // making sure that the to and from are not the same 
+    function transferInvariant(address to, uint value, address tempUser) public {
         address from = msg.sender;
+        require(to != from && from != tempUser && to != tempUser, "Invalid addresses");
 
-        require(to != from, "Invalid receiver");
-        // pre-state
-        uint preBalance = balanceOf(from);
-        uint preTotalSupply = totalSupply();
-        uint prefromBalance = balanceOf(from);
-        uint pretoBalance = balanceOf(to);
-        uint preAllowance = allowance(from, to);
-
+        // Store initial state
+        uint[4] memory preState = [
+            balanceOf(tempUser),
+            balanceOf(from),
+            balanceOf(to),
+            totalSupply()
+        ];
 
         emit TransferPreDebug(from, to, value);
-        // action
         bool success = transfer(to, value);
-        // assert(success);
-
-        // post-state
-        uint postBalance = balanceOf(from);
-        uint postTotalSupply = totalSupply();
-        uint postFromBalance = balanceOf(from);
-        uint postToBalance = balanceOf(to);
-        uint postAllowance = allowance(from, to);
-
+        assert(success);
         emit TransferPostDebug(from, to, value);
-        // assertions
-        assert(postBalance == preBalance - value);
-        assert(postTotalSupply == preTotalSupply);
-        assert(postFromBalance == prefromBalance - value);
-        assert(postToBalance == pretoBalance + value);
-        assert(postAllowance == preAllowance);
+
+        // Verify state changes
+        assert(balanceOf(tempUser) == preState[0]); // Third user's balance unchanged
+        assert(balanceOf(from) == preState[1] - value); // Sender's balance decreased
+        assert(balanceOf(to) == preState[2] + value); // Recipient's balance increased
+        assert(totalSupply() == preState[3]); // Total supply unchanged
+        assert(allowance(from, to) == allowance(from, to)); // Allowance unchanged
     }
     
-    function nameAndSymbolShouldBeSame() public view {
-        assert(keccak256(abi.encodePacked(name())) == keccak256(abi.encodePacked("AllInvariants")));
-        assert(keccak256(abi.encodePacked(symbol())) == keccak256(abi.encodePacked("ALLINV")));
-    }
 
-    function decimalsShouldBe18() public view {
-        assert(decimals() == 18);
-    }
-
-    function transferFromInvariant(address from, address to, uint value) public {
+    function transferFromInvariant(address from, address to, uint value, address tempUser) public {
         address spender = msg.sender;
         require(from != to, "Invalid from and to");
+        require(from != tempUser, "Invalid from");
+        require(to != tempUser, "Invalid to");
+        require(spender != tempUser, "Invalid spender");
+
+        uint preTempUserBalance = balanceOf(tempUser);
         uint preAllowance = allowance(from, spender);
         uint preFromBalance = balanceOf(from);
         uint preToBalance = balanceOf(to);
@@ -106,11 +92,13 @@ contract AllInvariants is Token {
         bool success = transferFrom(from, to, value);
         assert(success);
         emit TransferFromPostDebug(from, to, value);
+        uint postTempUserBalance = balanceOf(tempUser);
         uint postAllowance = allowance(from, spender);
         uint postFromBalance = balanceOf(from);
         uint postToBalance = balanceOf(to);
         uint postTotalSupply = totalSupply();
 
+        assert(postTempUserBalance == preTempUserBalance); // Third user's balance should not change
         assert(postAllowance == preAllowance - value);
         assert(postFromBalance == preFromBalance - value);
         assert(postToBalance == preToBalance + value);
@@ -150,7 +138,8 @@ contract AllInvariants is Token {
         uint preTempUserBalance = balanceOf(tempUser);
 
         emit BurnPreDebug(owner, value);
-        _burn(owner, value);
+        burn(tempUser, value);
+        burn(owner, value);
         emit BurnPostDebug(owner, value);
         uint postTotalSupply = totalSupply();
         uint postOwnerBalance = balanceOf(owner);

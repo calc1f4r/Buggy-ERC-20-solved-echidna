@@ -40,6 +40,8 @@ contract Challenge02 {
     }
 
     function approve(address owner, address spender, uint256 amount) public {
+
+        assert(owner==msg.sender);
         allowance[owner][spender] = amount; // @audit missing access control
         emit Approval(owner, spender, amount);
     }

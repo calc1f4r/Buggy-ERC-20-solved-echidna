@@ -31,5 +31,12 @@ This work was created by [BlockChomper](https://x.com/DegenShaker).
 
 
 #### Solutions 
-
-Command : `echidna crytic/challenge01Fuzztesting.sol --contract AllInvariants --config config.yaml;`
+1. Transfer does not minus the balance from the reciever.
+> cmd to run echidna : echidna crytic/Challenge01FuzzTesting.sol --config config.yaml;
+2. Missing access control on approve and missing zero address checks on approve.
+> cmd to run echidna : ` echidna crytic/Challenge02FuzzTesting.sol --config config.yaml`
+3. Missing access control on burn anybody can burn anyone's token 
+> cmd to run echindna : `echidna crytic/Challenge03FuzzTesting.sol --config config.yaml;`
+4. Missing pause modifier on basic controls missing pausing in transferFrom
+5. Interchange values from from and to in the transfer functions 
+6. Missing blacklisting of from address 

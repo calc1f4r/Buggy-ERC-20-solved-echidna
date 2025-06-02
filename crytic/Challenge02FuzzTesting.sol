@@ -22,6 +22,7 @@ contract AllInvariants is Token {
         // Initialize the contract with some tokens
         owner = msg.sender;
     }
+    
     //////////////// minting Invariants ////////////////////
     function mintInvariant(address to, uint256 amount) public {
         require(to != address(0), "Cannot mint to zero address");
@@ -32,12 +33,12 @@ contract AllInvariants is Token {
         emit MintPreDebug(to, amount);
         _mint(to, amount);
         emit MintPostDebug(to, amount);
+        
         uint256 postTotalSupply = totalSupply;
         uint256 postBalance = balanceOf[to];
         assert(postBalance == preBalance + amount);
         assert(postTotalSupply == preTotalSupply + amount);
     }
-
 
     // this must always hold true
     function totalBalanceShouldNeverBeLessThanUserBalance(address user) public view {
@@ -46,40 +47,43 @@ contract AllInvariants is Token {
         assert(totalBalance >= userBalance);
     }
 
-    /*
-    @
-    */
-    function transferInvariant(address to, uint256 value) public {
+    function transferInvariant(address to, uint256 value, address tempUser) public {
         // making sure that the to and from are not the same 
         address from = msg.sender;
+        require(from != tempUser, "Invalid from");
+        require(to != tempUser, "Invalid to");
 
-        require(to != from, "Invalid receiver");
         // pre-state
+        uint256 preTempUserBalance = balanceOf[tempUser];
         uint256 preTotalSupply = totalSupply;
         uint256 prefromBalance = balanceOf[from];
         uint256 pretoBalance = balanceOf[to];
-        uint256 preAllowance = allowance[from][to];
+        uint256 preAllowance = allowance[from][msg.sender];
 
         // Precondition check for H01
         require(prefromBalance >= value, "Transfer: sender balance too low (H01)");
 
         emit TransferPreDebug(from, to, value);
+        
         // action
         bool success = transfer(to, value);
         assert(success);
 
         // post-state
+        uint256 postTempUserBalance = balanceOf[tempUser];
+        uint256 postAllowance = allowance[from][msg.sender];
         uint256 postTotalSupply = totalSupply;
         uint256 postFromBalance = balanceOf[from];
         uint256 postToBalance = balanceOf[to];
-        uint256 postAllowance = allowance[from][to];
 
         emit TransferPostDebug(from, to, value);
+        
         // assertions
+        assert(postTempUserBalance == preTempUserBalance);
+        assert(postAllowance == preAllowance);
         assert(postTotalSupply == preTotalSupply);
         assert(postFromBalance == prefromBalance - value);
         assert(postToBalance == pretoBalance + value);
-        assert(postAllowance == preAllowance);
     }
     
     function nameAndSymbolShouldBeSame() public view {
@@ -91,9 +95,14 @@ contract AllInvariants is Token {
         assert(decimals == 18);
     }
 
-    function transferFromInvariant(address from, address to, uint256 value) public {
+    function transferFromInvariant(address from, address to, uint256 value, address tempUser) public {
         address spender = msg.sender;
         require(from != to, "Invalid from and to");
+        require(from != tempUser, "Invalid from");
+        require(to != tempUser, "Invalid to");
+        require(spender != tempUser, "Invalid spender");
+
+        uint256 preTempUserBalance = balanceOf[tempUser];
         uint256 preAllowance = allowance[from][spender];
         uint256 preFromBalance = balanceOf[from];
         uint256 preToBalance = balanceOf[to];
@@ -107,17 +116,19 @@ contract AllInvariants is Token {
         bool success = transferFrom(from, to, value);
         assert(success);
         emit TransferFromPostDebug(from, to, value);
+        
+        uint256 postTempUserBalance = balanceOf[tempUser];
         uint256 postAllowance = allowance[from][spender];
         uint256 postFromBalance = balanceOf[from];
         uint256 postToBalance = balanceOf[to];
         uint256 postTotalSupply = totalSupply;
 
+        assert(postTempUserBalance == preTempUserBalance);
         assert(postAllowance == preAllowance - value);
         assert(postFromBalance == preFromBalance - value);
         assert(postToBalance == preToBalance + value);
         assert(postTotalSupply == preTotalSupply);
     }
-
 
     function approveInvariant(address spender, uint256 value, address tempUser) public {
         address owner = msg.sender;
@@ -159,6 +170,7 @@ contract AllInvariants is Token {
         emit BurnPreDebug(owner, value);
         _burn(owner, value);
         emit BurnPostDebug(owner, value);
+        
         uint256 postTotalSupply = totalSupply;
         uint256 postOwnerBalance = balanceOf[owner];
         uint256 postTempUserBalance = balanceOf[tempUser];
@@ -169,8 +181,4 @@ contract AllInvariants is Token {
         // no other user should be affected
         assert(postTempUserBalance == preTempUserBalance);
     }
-
-    
-
-    
 }
