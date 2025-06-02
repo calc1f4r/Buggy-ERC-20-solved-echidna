@@ -40,11 +40,13 @@ contract Challenge02 {
     }
 
     function approve(address owner, address spender, uint256 amount) public {
-        allowance[owner][spender] = amount;
+        allowance[owner][spender] = amount; // @audit missing access control
         emit Approval(owner, spender, amount);
     }
 
     function transfer(address to, uint256 amount) public virtual returns (bool) {
+
+        
         balanceOf[msg.sender] -= amount;
 
         unchecked {
@@ -63,7 +65,7 @@ contract Challenge02 {
 
         balanceOf[from] -= amount;
 
-
+        // @audit fix overflow 
         unchecked {
             balanceOf[to] += amount;
         }

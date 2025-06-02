@@ -32,4 +32,4 @@ This work was created by [BlockChomper](https://x.com/DegenShaker).
 
 #### Solutions 
 
-Command : `echidna crytic/challenge01.sol --contract AllInvariants --config config.yaml;`
+Command : `echidna crytic/challenge01Fuzztesting.sol --contract AllInvariants --config config.yaml;`
