@@ -84,7 +84,9 @@ contract Challlenge01 {
         uint256 fromBalance = _balances[from];
         if (fromBalance < value) revert InsufficientBalance(from, fromBalance, value);
 
-        _balances[to] += value;
+        // @audit missing subtraction of value from fromBalance
+        _balances[to] += value; // @fix
+        _balances[from] -= value; // @fix
         emit Transfer(from, to, value);
     }
 

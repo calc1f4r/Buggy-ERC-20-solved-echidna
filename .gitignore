@@ -1,0 +1,20 @@
+# Echidna corpus directory
+corpus/
+
+# Solidity build artifacts
+cache/
+out/
+
+# IDE files
+.vscode/
+.idea/
+
+# Node modules (if using any JavaScript/TypeScript tools)
+node_modules/
+
+# Environment files
+.env
+.env.local
+
+# Logs
+*.log 
