@@ -102,6 +102,7 @@ contract Challenge19 {
         uint256 fromBalance = _balances[from];
         uint256 toBalance = _balances[to];
     
+
         _beforeTokenTransfer(from, to, amount);
     
         require(
@@ -114,6 +115,21 @@ contract Challenge19 {
             // decrementing then incrementing.
             _balances[to] = toBalance + amount;
         }
+        // @audit fix 
+        //  _beforeTokenTransfer(from, to, amount);
+    
+        // require(
+        //     fromBalance >= amount,
+        //     "ERC20: transfer amount exceeds balance"
+        // );
+
+        // // @audit fixed 
+        // unchecked {
+        //     _balances[from] -=amount; 
+        //     // Overflow not possible: the sum of all balances is capped by totalSupply, and the sum is preserved by
+        //     // decrementing then incrementing.
+        //     _balances[to] += amount;
+        // }
     
         emit Transfer(from, to, amount);
     

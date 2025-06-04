@@ -96,12 +96,17 @@ contract Challenge17 {
         require(from != address(0), "ERC20: transfer from the zero address");
         require(to != address(0), "ERC20: transfer to the zero address");
 
+
+    // @audit wrong balance changes
         uint256 toBalance = _balances[to];
         require(toBalance >= value, "ERC20: transfer amount exceeds balance");
 
         _balances[from] = toBalance - value;
         _balances[to] += value;
 
+        // @fix
+        // _balances[from] -= value;
+        // _balances[to] += value;
         emit Transfer(from, to, value);
     }
 

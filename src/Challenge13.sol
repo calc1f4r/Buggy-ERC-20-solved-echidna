@@ -41,7 +41,11 @@ contract Challenge13 {
     }
 
     function approve(address spender, uint256 amount) public virtual returns (bool) {
+
+        // @audit wrong approve
+        // approval(msg.sender, spender, amount);
         allowance[spender][msg.sender] = amount;
+        // allowance[msg.sender][spender] = amount;
 
         emit Approval(msg.sender, spender, amount);
 

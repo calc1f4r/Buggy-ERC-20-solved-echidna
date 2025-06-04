@@ -125,6 +125,8 @@ contract Challenge18 {
     function _mint(address account, uint256 value) internal {
         require(account != address(0), "ERC20: mint to the zero address");
 
+    // @audit no total supply change
+        // _totalSupply += value;
         unchecked {
             _balances[account] += value;
         }
