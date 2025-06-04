@@ -30,7 +30,7 @@ Please see the full license [here](https://creativecommons.org/licenses/by-nc-sa
 This work was created by [BlockChomper](https://x.com/DegenShaker).
 
 
-#### Solutions 
+#### Solutions with echidna fuzzful fuzzing 
 1. Transfer does not minus the balance from the reciever.
 > cmd to run echidna : echidna crytic/Challenge01FuzzTesting.sol --config config.yaml;
 2. Missing access control on approve and missing zero address checks on approve.
@@ -39,4 +39,6 @@ This work was created by [BlockChomper](https://x.com/DegenShaker).
 > cmd to run echindna : `echidna crytic/Challenge03FuzzTesting.sol --config config.yaml;`
 4. Missing pause modifier on basic controls missing pausing in transferFrom
 5. Interchange values from from and to in the transfer functions 
+> cnd to run echidna : `echidna crytic/Challenge05FuzzTesting.sol --config config.yaml;`
 6. Missing blacklisting of from address 
+> cmd to run echidna : `echidna crytic/Challenge06FuzzTesting.sol --config config.yaml;`

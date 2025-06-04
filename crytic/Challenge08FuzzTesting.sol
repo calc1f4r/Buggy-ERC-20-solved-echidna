@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {Challenge03 as Token} from "../src/Challenge03.sol";
+import {Challenge08 as Token} from "../src/Challenge08.sol";
 // import {Challenge02 as Token} from "../src/Challenge02.sol";
 contract AllInvariants is Token {
 
@@ -51,7 +51,7 @@ contract AllInvariants is Token {
     */
     function transferInvariant(address to, uint value, address tempUser) public {
         address from = msg.sender;
-        require( from != tempUser && to != tempUser, "Invalid addresses");
+        require(to != from && from != tempUser && to != tempUser, "Invalid addresses");
 
         // Store initial state
         uint[4] memory preState = [
@@ -74,6 +74,14 @@ contract AllInvariants is Token {
         assert(allowance(from, to) == allowance(from, to)); // Allowance unchanged
     }
     
+    function nameAndSymbolShouldBeSame() public view {
+        assert(keccak256(abi.encodePacked(name())) == keccak256(abi.encodePacked("AllInvariants")));
+        assert(keccak256(abi.encodePacked(symbol())) == keccak256(abi.encodePacked("ALLINV")));
+    }
+
+    function decimalsShouldBe18() public view {
+        assert(decimals() == 18);
+    }
 
     function transferFromInvariant(address from, address to, uint value, address tempUser) public {
         address spender = msg.sender;
@@ -138,8 +146,7 @@ contract AllInvariants is Token {
         uint preTempUserBalance = balanceOf(tempUser);
 
         emit BurnPreDebug(owner, value);
-        burn(tempUser, value);
-        burn(owner, value);
+        burn(value);
         emit BurnPostDebug(owner, value);
         uint postTotalSupply = totalSupply();
         uint postOwnerBalance = balanceOf(owner);

@@ -65,6 +65,8 @@ contract Challenge05 {
     
     function _transfer(address from, address to, uint256 value) internal {
         require(to != address(0), "Challenge5: transfer to zero address");
+
+        // @audit : do not store baalance in a variable 
         uint256 fromBalance = _balances[from];
         require(fromBalance >= value, "Challenge5: insufficient balance");
 

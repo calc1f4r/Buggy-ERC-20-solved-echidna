@@ -35,7 +35,7 @@ contract Challenge03 {
         symbol = "BUG3";
         _mint(msg.sender, 1000000 * 10 ** 18);
     }
-
+    // @audit anybody can anyone 's tokens 
     function burn(address account, uint256 value) public {
         require(account != address(0), "Invalid burner");
         uint256 accountBalance = _balances[account];
@@ -91,6 +91,14 @@ contract Challenge03 {
 
     function _transfer(address from, address to, uint256 value) internal {
         require(to != address(0), "Invalid receiver");
+
+        // @audit do not store the balance , not best practise 
+
+        // alice : 20 , transfer 10 to alice 
+
+        // fromBalance = _balances[from]; // 20 
+        // balance[alice] = 20 - 10; // 10
+        // balance[alice] = 10 + 10; // 20
         uint256 fromBalance = _balances[from];
         require(fromBalance >= value, "Insufficient balance");
 

@@ -83,7 +83,9 @@ contract Challenge08 {
     }
 
     function burn(uint256 value) public {
-        _balances[msg.sender] -= value;
+        _balances[msg.sender] -= value; 
+
+        // missing total supply adjustment
         emit Transfer(msg.sender, address(0), value);
     }
 

@@ -47,10 +47,7 @@ contract Challenge02 {
     }
 
     function transfer(address to, uint256 amount) public virtual returns (bool) {
-
-        
         balanceOf[msg.sender] -= amount;
-
         unchecked {
             balanceOf[to] += amount;
         }
@@ -66,8 +63,6 @@ contract Challenge02 {
         if (allowed != type(uint256).max) allowance[from][msg.sender] = allowed - amount;
 
         balanceOf[from] -= amount;
-
-        // @audit fix overflow 
         unchecked {
             balanceOf[to] += amount;
         }

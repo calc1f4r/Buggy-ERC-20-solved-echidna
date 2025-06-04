@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {Challenge03 as Token} from "../src/Challenge03.sol";
+import {Challenge06 as Token} from "../src/Challenge06.sol";
 // import {Challenge02 as Token} from "../src/Challenge02.sol";
 contract AllInvariants is Token {
 
@@ -39,6 +39,21 @@ contract AllInvariants is Token {
     }
 
 
+    // testing blacklisting feature 
+    // if the user was added from blacklist and then owner become zero address, then there should be no way to remove the user from blacklist
+    function isBlacklistedInvariant(address user) public  {
+        require(msg.sender!=address(0), "Invalid sender");
+        addToBlacklist(user);
+
+        contractOwner=address(0); // Simulate owner being set to zero address
+        bool isBlacklisted = blacklist[user];
+        assert(isBlacklisted == true); // User should be blacklisted
+
+    }
+
+
+
+
     // this must always hold true
     function totalBalanceShouldNeverBeLessThanUserBalance(address user) public view {
         uint userBalance = balanceOf(user);
@@ -52,7 +67,7 @@ contract AllInvariants is Token {
     function transferInvariant(address to, uint value, address tempUser) public {
         address from = msg.sender;
         require( from != tempUser && to != tempUser, "Invalid addresses");
-
+        bool ifuserBlacklisted = blacklist[from] || blacklist[to];
         // Store initial state
         uint[4] memory preState = [
             balanceOf(tempUser),
@@ -65,7 +80,17 @@ contract AllInvariants is Token {
         bool success = transfer(to, value);
         assert(success);
         emit TransferPostDebug(from, to, value);
+        
 
+        // if the user is blacklisted, then transfer should fail
+        if (ifuserBlacklisted) {
+            assert(balanceOf(tempUser) == preState[0]); // Third user's balance unchanged
+            assert(balanceOf(from) == preState[1]); // Sender's balance unchanged
+            assert(balanceOf(to) == preState[2]); // Recipient's balance unchanged
+            assert(totalSupply() == preState[3]); // Total supply unchanged
+            assert(allowance(from, to) == allowance(from, to)); // Allowance unchanged  
+            return; // Exit early if transfer failed due to blacklisting
+        }
         // Verify state changes
         assert(balanceOf(tempUser) == preState[0]); // Third user's balance unchanged
         assert(balanceOf(from) == preState[1] - value); // Sender's balance decreased
@@ -77,10 +102,10 @@ contract AllInvariants is Token {
 
     function transferFromInvariant(address from, address to, uint value, address tempUser) public {
         address spender = msg.sender;
-        require(from != to, "Invalid from and to");
         require(from != tempUser, "Invalid from");
         require(to != tempUser, "Invalid to");
         require(spender != tempUser, "Invalid spender");
+        bool ifuserBlacklisted = blacklist[from] || blacklist[to] || blacklist[spender];
 
         uint preTempUserBalance = balanceOf(tempUser);
         uint preAllowance = allowance(from, spender);
@@ -97,6 +122,18 @@ contract AllInvariants is Token {
         uint postFromBalance = balanceOf(from);
         uint postToBalance = balanceOf(to);
         uint postTotalSupply = totalSupply();
+
+        // if the user is blacklisted, then transfer should fail
+        if (ifuserBlacklisted) {    
+
+            assert(postTempUserBalance == preTempUserBalance); // Third user's balance should not change
+            assert(postAllowance == preAllowance); // Allowance should not change
+            assert(postFromBalance == preFromBalance); // From user's balance should not change
+            assert(postToBalance == preToBalance); // To user's balance should not change
+            assert(postTotalSupply == preTotalSupply); // Total supply should not change
+            // Return early if transfer failed due to blacklisting
+            return;
+        }
 
         assert(postTempUserBalance == preTempUserBalance); // Third user's balance should not change
         assert(postAllowance == preAllowance - value);
@@ -128,29 +165,29 @@ contract AllInvariants is Token {
         assert(postOwnerBalance == preOwnerBalance);
         assert(postSpenderBalance == preSpenderBalance);
     }
+    // no burn in challenge 5
+    // function burnInvariant(uint value,address tempUser) public {
+    //     address owner = msg.sender;
+    //     require(owner != tempUser, "Invalid owner");
 
-    function burnInvariant(uint value,address tempUser) public {
-        address owner = msg.sender;
-        require(owner != tempUser, "Invalid owner");
+    //     uint preTotalSupply = totalSupply();
+    //     uint preOwnerBalance = balanceOf(owner);
+    //     uint preTempUserBalance = balanceOf(tempUser);
 
-        uint preTotalSupply = totalSupply();
-        uint preOwnerBalance = balanceOf(owner);
-        uint preTempUserBalance = balanceOf(tempUser);
+    //     emit BurnPreDebug(owner, value);
+    //     burn(tempUser, value);
+    //     burn(owner, value);
+    //     emit BurnPostDebug(owner, value);
+    //     uint postTotalSupply = totalSupply();
+    //     uint postOwnerBalance = balanceOf(owner);
+    //     uint postTempUserBalance = balanceOf(tempUser);
 
-        emit BurnPreDebug(owner, value);
-        burn(tempUser, value);
-        burn(owner, value);
-        emit BurnPostDebug(owner, value);
-        uint postTotalSupply = totalSupply();
-        uint postOwnerBalance = balanceOf(owner);
-        uint postTempUserBalance = balanceOf(tempUser);
+    //     assert(postTotalSupply == preTotalSupply - value);
+    //     assert(postOwnerBalance == preOwnerBalance - value);
 
-        assert(postTotalSupply == preTotalSupply - value);
-        assert(postOwnerBalance == preOwnerBalance - value);
-
-        // no other user should be affected
-        assert(postTempUserBalance == preTempUserBalance);
-    }
+    //     // no other user should be affected
+    //     assert(postTempUserBalance == preTempUserBalance);
+    // }
 
 
 }

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {Challenge03 as Token} from "../src/Challenge03.sol";
+import {Challenge05 as Token} from "../src/Challenge05.sol";
 // import {Challenge02 as Token} from "../src/Challenge02.sol";
 contract AllInvariants is Token {
 
@@ -128,29 +128,29 @@ contract AllInvariants is Token {
         assert(postOwnerBalance == preOwnerBalance);
         assert(postSpenderBalance == preSpenderBalance);
     }
+    // no burn in challenge 5
+    // function burnInvariant(uint value,address tempUser) public {
+    //     address owner = msg.sender;
+    //     require(owner != tempUser, "Invalid owner");
 
-    function burnInvariant(uint value,address tempUser) public {
-        address owner = msg.sender;
-        require(owner != tempUser, "Invalid owner");
+    //     uint preTotalSupply = totalSupply();
+    //     uint preOwnerBalance = balanceOf(owner);
+    //     uint preTempUserBalance = balanceOf(tempUser);
 
-        uint preTotalSupply = totalSupply();
-        uint preOwnerBalance = balanceOf(owner);
-        uint preTempUserBalance = balanceOf(tempUser);
+    //     emit BurnPreDebug(owner, value);
+    //     burn(tempUser, value);
+    //     burn(owner, value);
+    //     emit BurnPostDebug(owner, value);
+    //     uint postTotalSupply = totalSupply();
+    //     uint postOwnerBalance = balanceOf(owner);
+    //     uint postTempUserBalance = balanceOf(tempUser);
 
-        emit BurnPreDebug(owner, value);
-        burn(tempUser, value);
-        burn(owner, value);
-        emit BurnPostDebug(owner, value);
-        uint postTotalSupply = totalSupply();
-        uint postOwnerBalance = balanceOf(owner);
-        uint postTempUserBalance = balanceOf(tempUser);
+    //     assert(postTotalSupply == preTotalSupply - value);
+    //     assert(postOwnerBalance == preOwnerBalance - value);
 
-        assert(postTotalSupply == preTotalSupply - value);
-        assert(postOwnerBalance == preOwnerBalance - value);
-
-        // no other user should be affected
-        assert(postTempUserBalance == preTempUserBalance);
-    }
+    //     // no other user should be affected
+    //     assert(postTempUserBalance == preTempUserBalance);
+    // }
 
 
 }

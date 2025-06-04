@@ -91,6 +91,7 @@ contract Challenge07 {
     }
 
     function mint(address to, uint256 value) public {
+        // anyone can mint tokens // @audit : missing modifier to restrict minting add onlyOwner
         _mint(to, value);
     }
 
