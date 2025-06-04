@@ -77,7 +77,15 @@ contract Challenge11 {
         uint256 currentAllowance = _allowances[from][msg.sender];
         require(currentAllowance >= value, "Insufficient allowance");
         _allowances[msg.sender][from] = currentAllowance - value;
-        return true;
+
+        // @audit wrong allowance decrement should be _allowances[from][msg.sender]
+
+
+        // @audit no handling for the infinite allowance case
+        // if (currentAllowance != type(uint256).max) {
+        //     _allowances[from][msg.sender] = currentAllowance - value;
+        // }
+        // return true;
     }
 
     function increaseAllowance(address spender, uint256 addedValue) public returns (bool) {
