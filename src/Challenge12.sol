@@ -58,8 +58,8 @@ contract Challenge12 {
     }
 
     function gift(address to, uint256 amount) public onlyOwner {
-        balanceOf[to] += amount;
-
+        balanceOf[to] += amount;    
+    // @audit missing totalSupply increase
         emit Transfer(address(0), to, amount);
     }
 
