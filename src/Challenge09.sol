@@ -39,15 +39,15 @@ contract Challenge09 {
         _mint(msg.sender, 1000000 * 10 ** decimals);
     }
 
-    function balanceOf(address account) external view returns (uint256) {
+    function balanceOf(address account) public view returns (uint256) {
         return _balances[account];
     }
 
-    function totalSupply() external view returns (uint256) {
+    function totalSupply() public view returns (uint256) {
         return _totalSupply;
     }
 
-    function allowance(address owner, address spender) external view returns (uint256) {
+    function allowance(address owner, address spender) public view returns (uint256) {
         return _allowances[owner][spender];
     }
 
@@ -58,6 +58,7 @@ contract Challenge09 {
     }
 
     function transfer(address to, uint256 amount) public returns (bool) {
+        // @audit overflow missing
         unchecked {
             _balances[msg.sender] -= amount;
         }

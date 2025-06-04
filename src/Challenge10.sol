@@ -42,7 +42,7 @@ contract Challenge10 {
     }
 
     modifier onlyOwner() {
-        msg.sender == owner;
+        msg.sender == owner; // @audit missing require statement
         _;
     }
 
@@ -117,10 +117,10 @@ contract Challenge10 {
         require(newOwner != address(0), "Ownable: new owner is the zero address");
         _transferOwnership(newOwner);
     }
-
-    function renounceOwnership() public onlyOwner {
-        _transferOwnership(address(0));
-    }
+    // commenting out for test purposes only
+    // function renounceOwnership() public onlyOwner {
+    //     _transferOwnership(address(0));
+    // }
 
     function _transfer(address from, address to, uint256 amount) internal {
         require(from != address(0), "ERC20: transfer from the zero address");

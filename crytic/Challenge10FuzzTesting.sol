@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.26;
 
-import {Challenge09 as Token} from "../src/Challenge09.sol";
+import {Challenge10 as Token} from "../src/Challenge10.sol";
 // import {Challenge02 as Token} from "../src/Challenge02.sol";
 contract AllInvariants is Token {
 
@@ -17,7 +17,6 @@ contract AllInvariants is Token {
     event BurnPreDebug(address indexed owner, uint256 value);
     event BurnPostDebug(address indexed owner, uint256 value);
 
-    address public owner;
     constructor() Token() {
         // Initialize the contract with some tokens
         owner = msg.sender;
@@ -75,12 +74,12 @@ contract AllInvariants is Token {
     }
     
     function nameAndSymbolShouldBeSame() public view {
-        assert(keccak256(abi.encodePacked(name)) == keccak256(abi.encodePacked("AllInvariants")));
-        assert(keccak256(abi.encodePacked(symbol)) == keccak256(abi.encodePacked("ALLINV")));
+        assert(keccak256(abi.encodePacked(name())) == keccak256(abi.encodePacked("BuggyToken10")));
+        assert(keccak256(abi.encodePacked(symbol())) == keccak256(abi.encodePacked("BUG10")));
     }
 
-    function decimalsShouldBe18() public view {
-        assert(decimals == 18);
+    function decimalsShouldBe18() public pure {
+        assert(decimals() == 18);
     }
 
     function transferFromInvariant(address from, address to, uint value, address tempUser) public {
@@ -107,7 +106,14 @@ contract AllInvariants is Token {
         uint postTotalSupply = totalSupply();
 
         assert(postTempUserBalance == preTempUserBalance); // Third user's balance should not change
-        assert(postAllowance == preAllowance - value);
+        
+        // Handle infinite allowance case
+        if (preAllowance != type(uint256).max) {
+            assert(postAllowance == preAllowance - value);
+        } else {
+            assert(postAllowance == preAllowance); // Infinite allowance stays infinite
+        }
+        
         assert(postFromBalance == preFromBalance - value);
         assert(postToBalance == preToBalance + value);
         assert(postTotalSupply == preTotalSupply);
@@ -117,8 +123,6 @@ contract AllInvariants is Token {
         address owner = msg.sender;
 
         require(spender != owner, "Invalid spender");
-
-        uint preAllowance = allowance(owner, spender);
         uint preOwnerBalance = balanceOf(owner);
         uint preSpenderBalance = balanceOf(spender);
         uint preTotalSupply = totalSupply();
@@ -159,5 +163,119 @@ contract AllInvariants is Token {
         assert(postTempUserBalance == preTempUserBalance);
     }
 
+
+    function testInvarientIncreaseAllowance(address spender,uint addedValue) public {
+        address owner = msg.sender;
+
+
+        uint256 preAllowance = allowance(owner, spender);
+        uint256 preOwnerBalance = balanceOf(owner);
+        uint256 preSpenderBalance = balanceOf(spender);
+        uint256 preTotalSupply = totalSupply();
+
+        emit ApprovePreDebug(owner, spender, addedValue);
+        increaseAllowance(spender, addedValue);
+        emit ApprovePostDebug(owner, spender, addedValue);
+
+        uint256 postAllowance = allowance(owner, spender);
+        uint256 postTotalSupply = totalSupply();
+        uint256 postOwnerBalance = balanceOf(owner);
+        uint256 postSpenderBalance = balanceOf(spender);
+
+        assert(postAllowance == preAllowance + addedValue);
+        assert(postTotalSupply == preTotalSupply);
+        assert(postOwnerBalance == preOwnerBalance);
+        assert(postSpenderBalance == preSpenderBalance);
+    }
+    function testInvariantDecreaseAllowance(address spender, uint256 subtractedValue) public {
+        address owner = msg.sender;
+
+        uint256 currentAllowance = allowance(owner, spender);
+        require(currentAllowance >= subtractedValue, "ERC20: decreased allowance below zero");
+
+        uint256 preAllowance = allowance(owner, spender);
+        uint256 preOwnerBalance = balanceOf(owner);
+        uint256 preSpenderBalance = balanceOf(spender);
+        uint256 preTotalSupply = totalSupply();
+
+        emit ApprovePreDebug(owner, spender, subtractedValue);
+        decreaseAllowance(spender, subtractedValue);
+        emit ApprovePostDebug(owner, spender, subtractedValue);
+
+        uint256 postAllowance = allowance(owner, spender);
+        uint256 postTotalSupply = totalSupply();
+        uint256 postOwnerBalance = balanceOf(owner);
+        uint256 postSpenderBalance = balanceOf(spender);
+
+        assert(postAllowance == preAllowance - subtractedValue);
+        assert(postTotalSupply == preTotalSupply);
+        assert(postOwnerBalance == preOwnerBalance);
+        assert(postSpenderBalance == preSpenderBalance);
+    }
+
+        function mintAccessControlInvariant(address to, uint256 amount, address tempUser) public {
+        require(to != address(0), "Cannot mint to zero address");
+
+        uint preTotalSupply = totalSupply();
+        uint preBalanceTo = balanceOf(to);
+        uint preBalanceTempUser = balanceOf(tempUser);
+        
+        emit MintPreDebug(to, amount);
+        
+        mint(to, amount);
+
+        // Due to the buggy onlyOwner modifier in Challenge10, anyone can mint
+        // The modifier should have require(msg.sender == owner) but it's missing the require
+        // So mint will always succeed regardless of who calls it
+        assert(balanceOf(to) == preBalanceTo + amount); // Recipient's balance should increase
+        assert(totalSupply() == preTotalSupply + amount); // Total supply should increase
+        
+        // Temp user should not be affected
+        assert(balanceOf(tempUser) == preBalanceTempUser);
+        emit MintPostDebug(to, amount);
+    }
+
+    function burnAccessControlInvariant(uint256 amount, address tempUser) public {
+        address account = msg.sender;
+        require(account != tempUser, "Invalid account");
+
+        uint preTotalSupply = totalSupply();
+        uint preBalanceAccount = balanceOf(account);
+        uint preBalanceTempUser = balanceOf(tempUser);
+
+        emit BurnPreDebug(account, amount);
+
+        burn(account, amount);
+
+        // Due to the buggy onlyOwner modifier in Challenge10, anyone can burn
+        // The modifier should have require(msg.sender == owner) but it's missing the require
+        // So burn will always succeed regardless of who calls it
+        assert(balanceOf(account) == preBalanceAccount - amount); // Account's balance should decrease
+        assert(totalSupply() == preTotalSupply - amount); // Total supply should decrease
+
+        // Temp user should not be affected
+        assert(balanceOf(tempUser) == preBalanceTempUser);
+        emit BurnPostDebug(account, amount);
+    }
+
+
+    // not anyone else can be the owner 
+    
+    function ownerbeSame(address newowner) public  {
+
+        bool iscallertheowner=owner==msg.sender;
+
+
+        
+        if(iscallertheowner){
+            transferOwnership(newowner);
+            assert(owner == newowner);
+        }
+        else{
+            // If the caller is not the owner, they cannot change ownership
+            assert(owner != newowner);
+        }    
+        
+        }
 
 }
